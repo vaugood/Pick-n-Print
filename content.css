@@ -1,0 +1,36 @@
+/* Highlight box */
+#epp-highlight {
+  position: fixed;
+  pointer-events: none;
+  z-index: 2147483647;
+  border: 2px solid #00a2ff;
+  background: rgba(0, 162, 255, 0.08);
+  display: none;
+}
+
+/* Small status badge */
+#epp-badge {
+  position: fixed;
+  z-index: 2147483647;
+  bottom: 16px;
+  right: 16px;
+  background: #111;
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  display: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,.25);
+}
+
+#epp-badge strong { font-weight: 600; }
+#epp-badge .row { display: flex; gap: 8px; align-items: center; }
+#epp-badge button {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 0;
+  cursor: pointer;
+}
+#epp-badge button.primary { background: #00a2ff; color: #fff; }
+#epp-badge button.secondary { background: #333; color: #fff; }
