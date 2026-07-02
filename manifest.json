@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Element Print Picker",
+  "name": "Pick 'n' Print",
   "version": "0.1.0",
   "description": "Pick specific elements on a page and print only those elements.",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Element Print Picker"
+    "default_title": "Pick 'n' Print"
   },
   "permissions": ["activeTab", "scripting", "storage"],
   "background": {
