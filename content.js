@@ -1,5 +1,6 @@
-// content.js — Element Print Picker (MV3)
-// Picker UI + selection + print via hidden iframe (no popups)
+// content.js — Pick 'n' Print (MV3)
+// Picker UI + selection + print via hidden iframe (no popups).
+// DOM capture/serialization fidelity lives in snapshot.js.
 
 (() => {
   // Prevent double-install if injected multiple times
@@ -128,20 +129,21 @@
   function toggleSelection(target) {
     if (selected.has(target)) {
       selected.delete(target);
-      // Remove marker
-      try {
-        target.style.outline = "";
-        target.style.outlineOffset = "";
-      } catch {}
+      target.classList.remove("epp-selected");
     } else {
       selected.add(target);
-      // Marker for selected elements
-      try {
-        target.style.outline = "2px solid #ffb300";
-        target.style.outlineOffset = "2px";
-      } catch {}
+      target.classList.add("epp-selected");
     }
     updateCount();
+  }
+
+  // Printing a selected ancestor together with a separately-selected
+  // descendant would duplicate the descendant's content (once nested inside
+  // the ancestor's clone, once as its own page), so only the outermost
+  // selected elements are used for export.
+  function getEffectiveSelection() {
+    const all = Array.from(selected);
+    return all.filter((el) => !all.some((other) => other !== el && other.contains(el)));
   }
 
   function onClick(e) {
@@ -200,10 +202,7 @@
 
   function clearSelected() {
     for (const node of selected) {
-      try {
-        node.style.outline = "";
-        node.style.outlineOffset = "";
-      } catch {}
+      node.classList.remove("epp-selected");
     }
     selected.clear();
     updateCount();
@@ -213,72 +212,25 @@
   // -----------------------------
   // Print pipeline (hidden iframe)
   // -----------------------------
-  function collectPageStyles() {
-    // Copy style tags and external stylesheets into the print document.
-    // Note: CSP can affect loading some resources in the iframe.
-    const nodes = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'));
-    return nodes.map(n => n.outerHTML).join("\n");
-  }
-
-  function elementHTML(node) {
-    const clone = node.cloneNode(true);
-
-    // Clean any selection markers that are inline styles
-    if (clone?.style) {
-      clone.style.outline = "";
-      clone.style.outlineOffset = "";
-    }
-
-    return clone.outerHTML;
-  }
-
-  function buildPrintHTML() {
-    const styles = collectPageStyles();
-
-    const body = Array.from(selected)
-      .map(elementHTML)
-      .join("\n\n<hr/>\n\n");
-
-    const printCSS = `
-      <style>
-        body { margin: 16px; }
-        @media print {
-          hr {
-            page-break-after: always;
-            border: 0;
-            border-top: 1px solid #ddd;
-            margin: 24px 0;
-          }
-        }
-      </style>
-    `;
-
-    // IMPORTANT: base href allows relative URLs (css/img) to resolve properly
-    const base = `<base href="${location.href}">`;
-
-    return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  ${base}
-  <title>Print Selected Elements</title>
-  ${styles}
-  ${printCSS}
-</head>
-<body>
-  ${body || "<p>(No elements selected)</p>"}
-</body>
-</html>`;
-  }
-
+  // DOM capture/serialization itself lives in snapshot.js (loaded before
+  // this file into the same isolated world) so the fidelity engine stays
+  // independent of picker UI/interaction concerns.
   function printSelected(fromInPageGesture) {
-    if (selected.size === 0) {
+    const targets = getEffectiveSelection();
+    if (targets.length === 0) {
       // Avoid alert spam; keep it in-page
       toast("No elements selected.");
       return;
     }
 
-    const html = buildPrintHTML();
+    let html;
+    try {
+      html = buildPrintHTML(targets);
+    } catch (err) {
+      console.error("[Pick 'n' Print] failed to capture selection", err);
+      toast("Couldn't prepare print — see console for details.");
+      return;
+    }
 
     // Create or reuse hidden iframe
     let frame = document.getElementById("epp-print-frame");

@@ -34,3 +34,10 @@
 }
 #epp-badge button.primary { background: #00a2ff; color: #fff; }
 #epp-badge button.secondary { background: #333; color: #fff; }
+
+/* Selection marker — a class (not a mutated inline style) so it can never
+   clobber a page's own pre-existing inline outline. */
+.epp-selected {
+  outline: 2px solid #ffb300 !important;
+  outline-offset: 2px !important;
+}

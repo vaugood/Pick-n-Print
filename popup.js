@@ -4,14 +4,17 @@ async function getActiveTab() {
 }
 
 async function ensureContentScript(tabId) {
-  // Inject content.js + content.css if not already present.
+  // Inject content.css + the fidelity engine + the picker script.
+  // snapshot.js must load before content.js: both execute as classic
+  // scripts sharing one isolated-world global scope, and content.js's
+  // print pipeline calls buildPrintHTML(), which snapshot.js defines.
   await chrome.scripting.insertCSS({
     target: { tabId },
     files: ["content.css"]
   });
   await chrome.scripting.executeScript({
     target: { tabId },
-    files: ["content.js"]
+    files: ["snapshot.js", "content.js"]
   });
 }
 
